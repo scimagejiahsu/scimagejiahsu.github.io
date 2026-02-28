@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test-time Compute vs Agent Routing：2026 成本與可靠性的真正平衡點</title>
+  <meta name="description" content="對外深度分析：何時該用長思考，何時該用多代理分工，並用可操作指標做決策。" />
+  <style>
+    :root{--bg:#0a1022;--card:#121a35;--line:#2d3d80;--text:#e9eeff;--muted:#a8b8e8;--accent:#79a9ff;--accent2:#58d3ff}
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(900px 480px at 80% -5%,#2a3f8f66,transparent),var(--bg);color:var(--text);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.9}
+    .wrap{max-width:1080px;margin:auto;padding:28px}
+    .hero,.article{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px}
+    .hero{box-shadow:0 16px 45px #0007}.article{margin-top:18px}
+    h1{font-size:clamp(30px,4vw,48px);line-height:1.2;margin:.2em 0 .5em}
+    h2{font-size:30px;margin-top:30px} h3{color:#cedbff}
+    .muted{color:var(--muted)} .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#22356f;color:#dbe6ff;font-size:12px}
+    .quote{border-left:4px solid var(--accent2);background:#102149;padding:10px 14px;border-radius:10px}
+    .toc{margin-top:14px;background:#0f1732;border:1px dashed #3353a8;border-radius:12px;padding:14px}
+    .toc a{color:#c9d8ff;text-decoration:none}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <span class="badge">PUBLIC INSIGHT · 2026</span>
+      <h1>Test-time Compute vs Agent Routing：2026 成本與可靠性的真正平衡點</h1>
+      <p class="muted">AI 團隊最常遇到的戰略問題，不是「哪個模型最強」，而是「在有限成本下，應該把算力放在單次長思考，還是放在多代理分工」。這篇給出可落地的決策框架。</p>
+      <nav class="toc">
+        <strong>目錄</strong>
+        <ol>
+          <li><a href="#s1">問題定義：兩種路徑其實在解不同問題</a></li>
+          <li><a href="#s2">長思考（Test-time compute）何時有優勢</a></li>
+          <li><a href="#s3">多代理分工（Agent routing）何時更划算</a></li>
+          <li><a href="#s4">常見誤區：把技術偏好當決策標準</a></li>
+          <li><a href="#s5">實戰決策矩陣與 14 天導入方法</a></li>
+          <li><a href="#s6">結論：先做可控，再做極致</a></li>
+        </ol>
+      </nav>
+    </section>
+
+    <article class="article">
+      <h2 id="s1">1) 問題定義：兩種路徑其實在解不同問題</h2>
+      <p>當團隊討論「要不要開啟更長推理」或「要不要導入多代理路由」時，表面上是在選技術路線，實際上是在選擇風險分佈方式。Test-time compute（以下簡稱 TTC）本質是把更多算力投入單次推理，期待在同一條思考鏈內得到更精準的結果；Agent routing 則是把任務拆解成多個專職代理，透過結構化分工降低單點失敗風險。兩者不是互斥，但它們優化的目標函數不同。</p>
+      <p>TTC 最擅長提升單題深度與難題穩定度，尤其在推理密集、語意依賴高、需跨段綜合判斷的任務中，長思考通常能降低粗糙結論。但代價是延遲與成本上升，且錯誤若發生，往往整段思考鏈一起失效。相對地，Routing 的優勢在於流程可觀測、可回滾、可替換：某個代理失敗時，整體系統仍能以降級模式運行。這種特性對營運可靠性非常關鍵。</p>
+      <p>因此第一個核心判斷是：<strong>TTC 是深度優化工具，Routing 是系統穩定化工具</strong>。若你把 Routing 當成單純提升答案品質的手段，會失望；若你把 TTC 當成可替代流程工程的萬靈丹，會付出昂貴成本。成熟團隊通常不是二選一，而是先明確任務型態，再做比例配置。</p>
+      <p>另一個常被忽略的事實是，這兩種策略對組織協作的要求不同。TTC 偏模型層優化，工程負擔相對集中；Routing 偏架構層優化，需跨角色協調（資料、平台、產品、營運）。換言之，Routing 的技術門檻不一定更高，但治理門檻通常更高。若團隊尚未建立基本的觀測與回滾能力，過早導入複雜路由只會放大混亂。</p>
+
+      <h2 id="s2">2) 長思考（Test-time compute）何時有優勢</h2>
+      <h3>場景一：高推理密度、低工具依賴</h3>
+      <p>例如複雜方案比較、策略推演、長文論證等任務，核心瓶頸在推理而不是資料調用。此時增加 TTC 常有顯著收益，因為模型有更多步驟做內部驗證與反例檢查。對外內容產線中，觀點文、研究型總結、跨來源結構化分析也常屬此類。</p>
+      <h3>場景二：輸出窗口短，但品質要求高</h3>
+      <p>若你必須在單次輸出中交付高密度、高一致性的內容（例如管理層簡報初稿、政策比較摘要），TTC 可以在不改流程結構下快速抬升品質。對早期團隊而言，這是最快的「品質止血」手段。</p>
+      <h3>場景三：任務不可輕易拆分</h3>
+      <p>有些任務天然不適合路由，例如語意高度耦合、跨段關聯強、局部結果難獨立驗證。若硬拆成多代理，常出現語義斷裂與整合成本反噬。此時以 TTC 先做整體一致性，再輔以輕量檢查代理，通常更實際。</p>
+      <p>但 TTC 的限制也必須誠實說清楚：第一，延遲上升會壓縮互動體驗；第二，成本隨輸出量級線性擴張；第三，錯誤一旦發生，定位困難。你可能得到一個「看起來很完整」但核心前提錯誤的答案，且不容易快速定位是哪一步出問題。這就是為何 TTC 適合用來強化高價值節點，而不適合直接套在所有任務。</p>
+
+      <h2 id="s3">3) 多代理分工（Agent routing）何時更划算</h2>
+      <h3>場景一：任務具有明確子流程</h3>
+      <p>當任務可拆為檢索、過濾、驗證、生成、審核等步驟時，Routing 可以讓每一步由專職代理負責，提升可觀測性與可替換性。這種架構尤其適合持續營運的內容系統、客服流程、內部知識處理。</p>
+      <h3>場景二：對可靠性與可回滾要求高</h3>
+      <p>Routing 最大優勢不在峰值品質，而在失敗可控。你可以對高風險節點加人工審核、對外發前加來源檢查、對低風險節點用便宜模型，形成成本分層。這種工程化能力是擴張前的必要條件。</p>
+      <h3>場景三：成本優化目標明確</h3>
+      <p>Routing 能做細粒度成本配置：簡單子任務用輕模型，難題才升級。相較把所有任務都用 TTC，Routing 更容易在長期流量下控制總成本。對追求穩定輸出的技術傳播者而言，這通常是更可持續路徑。</p>
+      <p>當然，Routing 並非免費午餐。它帶來的複雜度包括：協議設計、路由策略、狀態管理、跨代理一致性、監控與除錯。若你沒有基本的 metrics 與 tracing，Routing 會讓問題更難追。這也是為什麼很多團隊「架得很漂亮，跑起來很痛苦」——不是概念錯，而是治理基礎不足。</p>
+      <div class="quote">可操作原則：如果你目前最大的痛是「答案不夠深」，先加 TTC；如果最大的痛是「系統不穩、難維運」，先做 Routing。</div>
+
+      <h2 id="s4">4) 常見誤區：把技術偏好當決策標準</h2>
+      <p>誤區一是信仰化選型。有些團隊偏好「一個超強模型解決所有問題」，另一些團隊偏好「一切都拆成代理」。兩者都可能成功，也都可能失敗。問題不在路線本身，而在是否符合任務結構與營運約束。技術偏好不能替代數據決策。</p>
+      <p>誤區二是只看單次輸出品質，不看全鏈成本。你可能把某篇文章品質拉高了 10%，但把產線吞吐砍半，或讓人工審核負擔翻倍。對外品牌經營看的是長期穩定供給，不是單篇爆發。若指標只看 quality，不看 latency、cost、rework，就會做出錯誤優化。</p>
+      <p>誤區三是忽略失敗設計。很多架構圖只畫成功路徑，沒有畫失敗路徑。實際上，失敗路徑決定了你的系統是否可商用。無論 TTC 或 Routing，都必須回答：失敗時誰接手？是否降級？多久恢復？如何避免重複事故？沒有這些答案，就不能稱為可營運架構。</p>
+      <p>誤區四是把「可用」誤判為「可擴張」。一個流程在每天 3 次任務下看似穩定，不代表在每天 300 次仍然穩定。你需要在設計初期就保留擴張彈性：可替換模型、可拆分流程、可調整策略。否則每次放量都要重做架構，成本會在後期集中爆發。</p>
+
+      <h2 id="s5">5) 實戰決策矩陣與 14 天導入方法</h2>
+      <h3>決策矩陣（簡版）</h3>
+      <p>請用四個維度給任務打分：推理密度、流程可拆性、可靠性要求、成本壓力。若推理密度高且可拆性低，優先 TTC；若可拆性高且可靠性要求高，優先 Routing；若兩者都高，採混合策略：核心決策節點用 TTC，流程節點用 Routing。</p>
+      <h3>14 天導入節奏</h3>
+      <p><strong>D1-D3：基線建立。</strong>先量測現況：任務成功率、平均延遲、人工修訂率、每可接受輸出成本。沒有基線，後續優化都不可驗證。</p>
+      <p><strong>D4-D7：單變量實驗。</strong>先只調一件事：對高價值任務增加 TTC 或新增一個檢查代理。觀察指標變化，避免同時改太多導致歸因失敗。</p>
+      <p><strong>D8-D10：失敗路徑補齊。</strong>加上 fallback、人工介面、錯誤分類與告警閾值。讓系統不只在順風局好看，也能在逆風局存活。</p>
+      <p><strong>D11-D14：混合策略收斂。</strong>把 TTC 與 Routing 按任務類型做分層，形成可持續策略表。輸出最終決策文件：何種任務走哪條路、觸發條件是什麼、誰負責審核。</p>
+      <p>這套方法的關鍵在於「可驗證、可回滾、可迭代」。你不需要一次把架構做滿，但每一步都要能被指標證明有價值。這也是專業形象的核心：不是講得最炫，而是做得最穩。</p>
+
+      <h2 id="s6">6) 結論：先做可控，再做極致</h2>
+      <p>2026 年的 AI 能力競賽，真正的門檻不是模型更新速度，而是系統決策成熟度。TTC 與 Routing 都是好工具，差別在你是否把它們放在對的任務位置。我的建議非常直接：先把系統做成可控，再追求單點極致。沒有可控性，任何極致都不可持續。</p>
+      <p>如果你是技術傳播者或內容系統經營者，這個結論尤其重要。你需要的是每次都能交付可讀、可驗證、可分享的輸出，而不是偶爾出現一篇驚豔內容。長期影響力來自穩定可靠的產線，而穩定可靠來自正確的架構選擇與持續評估。</p>
+      <p>下一篇我會延伸到更細的實作題：<strong>「Routing policy 的自動化調參：如何根據任務難度動態切換模型與代理」</strong>，並附上可直接落地的策略模板。</p>
+      <p class="muted">References（方向）：NIST AI RMF、OWASP Top 10 for LLM Apps、可靠系統工程（SRE）實務、Agent orchestration pattern 文件。</p>
+    </article>
+  </main>
+</body>
+</html>
