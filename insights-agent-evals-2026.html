@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Agent 評估的下一戰：從 Demo 成功到營運可靠｜Scimaker Walle</title>
+  <meta name="description" content="一篇給技術決策者的對外深度分析：AI Agent 評估如何從單次成功轉為可營運可靠性。" />
+  <style>
+    :root{--bg:#0a1022;--panel:#121a35;--line:#2c3d80;--txt:#e9eeff;--muted:#a8b8e8;--brand:#78a8ff;--brand2:#59d3ff}
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(900px 500px at 80% -5%,#2a3f8f66,transparent),var(--bg);color:var(--txt);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.9}
+    .wrap{max-width:1080px;margin:auto;padding:28px}
+    .hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:28px}
+    .hero{box-shadow:0 16px 40px #0007}
+    .card{margin-top:18px}
+    h1{font-size:clamp(30px,4vw,48px);line-height:1.2;margin:.2em 0 .5em}
+    h2{font-size:30px;margin-top:30px}
+    h3{color:#ccdaff}
+    .muted{color:var(--muted)}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#22356f;color:#d9e4ff;font-size:12px}
+    .quote{border-left:4px solid var(--brand2);background:#11214b;padding:10px 14px;border-radius:10px}
+    .toc{margin-top:14px;background:#0f1732;border:1px dashed #3353a8;border-radius:12px;padding:14px}
+    .toc a{color:#c9d8ff;text-decoration:none}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <span class="badge">PUBLIC INSIGHT · 2026</span>
+      <h1>AI Agent 評估的下一戰：從 Demo 成功到營運可靠</h1>
+      <p class="muted">如果你正在做 AI Agent 產品，這篇不是教你「再多一個提示詞」，而是幫你建立真正可營運的評估框架：讓系統在高壓、長期、可審計的情境下仍然可信。</p>
+      <nav class="toc">
+        <strong>目錄</strong>
+        <ol>
+          <li><a href="#s1">為什麼 Demo 成功，正式上線卻失敗</a></li>
+          <li><a href="#s2">AI Agent 評估的四個層級</a></li>
+          <li><a href="#s3">可靠性設計：你真正要監控的指標</a></li>
+          <li><a href="#s4">從內容品質到營運品質：決策者常忽略的成本</a></li>
+          <li><a href="#s5">給團隊的 30 天落地路線圖</a></li>
+        </ol>
+      </nav>
+    </section>
+
+    <article class="card">
+      <h2 id="s1">1) 為什麼 Demo 成功，正式上線卻失敗</h2>
+      <p>幾乎每個團隊都看過這種場景：一場展示會中，AI Agent 回答流暢、工具調用順利、結論看起來專業，大家都覺得「可以上了」。但進入真實營運後，錯誤開始出現：同樣問題在不同時間給出不一致答案、引用來源失真、工具偶發 timeout 後整個流程崩潰、人工修訂成本遠高於預期。於是原本的「效率故事」變成「維運負擔」。</p>
+      <p>原因不神祕：Demo 測的是「最佳路徑」，營運面對的是「全部路徑」。Demo 會選最乾淨資料、最穩定網路、最熟悉問題；上線後遇到的是髒資料、模糊需求、跨部門語意差異、突發高流量，以及人類使用者的非預期行為。也就是說，Demo 證明的是「可以做到」，而營運要求的是「持續做到」。這中間缺的，不是模型，而是評估工程。</p>
+      <p>多數團隊把評估理解成分數：準確率、通過率、或某個 benchmark 百分比。但真正的 Agent 評估是系統性問題，至少同時涵蓋四件事：輸出是否正確、過程是否可控、失敗是否可回復、成本是否可承受。只要漏掉其中一個面向，即使短期數字漂亮，也會在規模化時快速失真。</p>
+      <p>所以第一個核心觀點是：<strong>AI Agent 評估不該是「驗收活動」，而是「營運能力」</strong>。如果評估只在上線前做一次，你拿到的只是靜態快照；但產品運作是動態系統，模型、資料、工具、使用行為都會持續漂移。沒有連續評估，你其實無法知道自己是否還在可控區間。</p>
+
+      <h2 id="s2">2) AI Agent 評估的四個層級</h2>
+      <h3>層級一：結果正確性（Output Correctness）</h3>
+      <p>這是最直觀也最容易被過度簡化的層級。你要判斷的不只是「答案像不像對」，而是「是否可追溯地對」。對於對外內容或商業決策支持場景，至少要包含：事實一致性、來源可追溯性、關鍵數據完整性、語義不扭曲性。很多錯誤不是胡說八道，而是半對半錯，這種錯誤最危險，因為它看起來合理。</p>
+      <h3>層級二：過程可靠性（Process Reliability）</h3>
+      <p>Agent 通常不是單輪問答，而是多步驟：檢索、比對、推理、工具調用、整合輸出。你需要評估每一步是否穩定，包含工具成功率、重試行為、fallback 是否生效、上下文是否污染。這一層常被忽略，結果就是「答案偶爾很好，偶爾完全走偏」。在營運環境裡，穩定性往往比峰值品質更重要。</p>
+      <h3>層級三：風險可控性（Risk Controllability）</h3>
+      <p>系統一定會失敗，關鍵是失敗時會不會擴大。你要明確定義高風險行為：未驗證醫療建議、金融承諾、法務誤導、跨系統寫入操作。並建立對應策略：拒答、降級、轉人工、阻斷外發。若你的系統沒有風險分級與觸發規則，就不具備可上線性，只有運氣上線。</p>
+      <h3>層級四：經濟可持續性（Economic Sustainability）</h3>
+      <p>這是決策者最晚關注卻最致命的一層。Agent 不只是模型費用，還包含工具 API 成本、人工審核成本、錯誤修復成本、信任受損成本。你要追的是「每個可接受輸出的總成本」，而不是單次生成價格。便宜模型若讓人工修訂倍增，總成本可能更高；高品質模型若降低返工，也許更省。</p>
+      <div class="quote">結論：沒有四層評估，就沒有真正可營運的 Agent。只有第一層，你擁有的是展示能力；四層齊備，你才擁有商業能力。</div>
+
+      <h2 id="s3">3) 可靠性設計：你真正要監控的指標</h2>
+      <p>下面這組指標，是我認為對實務最有解釋力的最小集合。重點不在多，而在可決策。</p>
+      <h3>A. 任務成功率（Task Success Rate）</h3>
+      <p>定義必須嚴格：不是「有輸出就算成功」，而是「輸出達成既定品質條件」。例如：有來源、格式正確、風險標註完整。這個指標直接反映你是否真的把 Agent 當工作系統，而不是文字生成器。</p>
+      <h3>B. 人工修訂率（Human Edit Rate）</h3>
+      <p>這是最誠實的品質訊號。若人工每篇都要大改，代表模型與流程沒有真正減負。把修訂分級（輕微、結構、事實）可進一步定位問題層級：是語氣問題、邏輯問題，還是事實問題。</p>
+      <h3>C. 風險事件密度（Safety Incidents per 100 runs）</h3>
+      <p>統計每 100 次任務中觸發高風險規則的次數。這能讓你監控系統是否在漂移。若事件密度上升，即使任務成功率看似穩定，也代表潛在事故正在累積。</p>
+      <h3>D. 回復時間（Recovery Time）</h3>
+      <p>當失敗發生，你多久能回到可用狀態？是 30 秒 fallback，還是 4 小時人工救火？這個指標關係到營運韌性。沒有 recovery 指標的系統，通常也沒有真正的 incident playbook。</p>
+      <h3>E. 每可接受輸出成本（Cost per Acceptable Output）</h3>
+      <p>把模型、工具、人工、重試、失敗成本全算進來。這是和管理層對話最有效的語言。若你只能報 token 成本，就很難解釋為何系統看似便宜卻仍然虧損。</p>
+      <p>這組指標有一個共同目的：把「AI 好不好用」這種主觀句子，轉成可持續優化的工程問題。可量測，才可優化；可優化，才可擴張。</p>
+
+      <h2 id="s4">4) 從內容品質到營運品質：決策者常忽略的成本</h2>
+      <p>很多團隊會把內容品質當成唯一 KPI，這當然重要，但不足夠。對外技術內容尤其如此：一篇文如果表面專業但引用錯誤，短期可能沒人發現，長期卻會侵蝕品牌信用。信用一旦折損，後續每篇內容都要支付「信任折價」。這就是隱形成本。</p>
+      <p>第二個常被忽略的是協作成本。當 Agent 輸出風格不穩定，編輯、審核、法務、產品都要投入額外溝通，組織摩擦上升。你會發現速度沒有變快，只是工作在不同角色之間轉移。這種轉移若沒有被量化，管理層很容易誤判效率。</p>
+      <p>第三個是學習成本。若團隊沒有固定的回顧節奏與錯誤分類，錯誤會反覆發生。你每週都在解同一類問題，代表系統沒有學習，只是人類在補洞。真正成熟的團隊會把錯誤轉成規則，把規則寫回流程，把流程再反映到指標，形成學習迴路。</p>
+      <p>所以我建議把品質分成兩層看：內容品質（對不對、清不清楚）與營運品質（穩不穩、可不可控、划不划算）。只有兩層同時達標，才算可持續競爭力。這也是為什麼我一直強調：AI Agent 專案是系統工程，不是 prompt 藝術。</p>
+
+      <h2 id="s5">5) 給團隊的 30 天落地路線圖</h2>
+      <p><strong>第 1 週：定義與基線。</strong>先定義任務成功條件、風險紅線、人工介入條件。建立最小評估集（至少 30 個真實案例），跑出第一版基線：成功率、修訂率、風險事件、成本。</p>
+      <p><strong>第 2 週：流程加固。</strong>導入工具 fallback、重試策略、輸出模板約束。把常見失敗做成可機器判斷的規則（例如來源缺失即 fail）。這週重點是把偶發成功變成可重複成功。</p>
+      <p><strong>第 3 週：風險治理。</strong>建立事件分級與處置流程（P0/P1/P2），並演練回滾。確保團隊在事故發生時不靠臨場反應，而有固定 playbook。這一步決定你能不能放心擴量。</p>
+      <p><strong>第 4 週：經濟驗證與對外發佈。</strong>計算每可接受輸出成本，與人工基線比較。若成本、品質、風險三者同時改善，再擴大流量並對外發佈。若任一項退化，先修再擴。</p>
+      <p>這個 30 天方法不是理論最優，而是執行阻力最低。它的價值在於讓團隊快速進入「可量測、可調整、可擴張」狀態。你不需要等完美架構才開始，但你必須從第一天就把評估當成產品核心，而不是收尾工作。</p>
+      <p>最後給一個決策句：<strong>當你能把 Agent 的成功、失敗、風險、成本都說清楚，才是真正可對外承諾的時刻。</strong>這不只是工程成熟度，更是品牌可信度。對外影響力長期來看，永遠建立在可驗證的穩定輸出上，而不是一兩次驚豔示範。</p>
+      <p class="muted">References（方向）：NIST AI RMF、OWASP Top 10 for LLM Applications、Model provider safety docs、Production incident response practices。</p>
+    </article>
+  </main>
+</body>
+</html>
