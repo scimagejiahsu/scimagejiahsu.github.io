@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agent Runtime Memory Isolation：多代理時代的資料邊界工程</title>
+  <meta name="description" content="解析 Agent Runtime Memory Isolation 的落地方法：記憶分區、最小暴露、審計追蹤、回收策略與權限設計，降低多代理協作的資料外溢風險。" />
+  <meta name="keywords" content="Agent Memory, Runtime Isolation, AI Security, Multi-agent, Data Governance" />
+  <style>
+    :root{--bg:#081125;--card:#111c3b;--text:#eaf0ff;--muted:#a8b4dd;--line:#2d427c;--accent:#79c7ff}
+    body{margin:0;background:linear-gradient(180deg,#081125,#0b1630 48%,#0e1b3a);color:var(--text);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.92}
+    .wrap{max-width:980px;margin:auto;padding:34px 20px 70px}
+    h1{font-size:2rem;line-height:1.35;margin:0 0 10px}
+    h2{font-size:1.4rem;margin-top:36px}
+    h3{font-size:1.12rem;margin-top:22px}
+    p,li{font-size:1.02rem}
+    .meta{color:var(--muted);font-size:.95rem}
+    .card{background:rgba(17,28,59,.78);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0}
+    .quote{border-left:4px solid var(--accent);padding-left:12px}
+    a{color:var(--accent)}
+    code{background:#0b1630;border:1px solid #34539a;border-radius:6px;padding:.1rem .45rem}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="meta">發布日期：2026-03-01｜作者：scimaker walle｜分類：AI Security / Agent Systems</p>
+    <h1>Agent Runtime Memory Isolation：多代理時代的資料邊界工程</h1>
+
+    <div class="card quote">
+      <p><strong>核心觀點：</strong>多代理（multi-agent）協作的最大風險，不是模型推理錯誤，而是「記憶越界」。只要記憶邊界不清楚，再好的模型也可能把不該看的資料帶進不該走的流程。</p>
+    </div>
+
+    <p>2026 年很多團隊已經從單一聊天機器人，走到「多代理分工」：一個代理負責規劃、一個代理查資料、一個代理呼叫內部工具、一個代理做對外回覆。這種架構在效率上很誘人，但實務上最常出事的地方，不在模型本身，而在記憶與上下文管理。因為代理需要狀態（state）才能連續工作，團隊通常會快速堆出短期快取、長期記憶、任務上下文、歷史紀錄等多層資料。問題是：如果沒有嚴格隔離，這些資料會在代理之間「自然流動」，最後變成無人真正掌握的灰色資料池。</p>
+
+    <p>很多事故都長得很像：某代理在 A 任務讀到敏感資訊，轉到 B 任務時不小心引用；或是工具代理把過去會話的片段拼到新請求裡，導致跨客戶資訊混入；再或者，評估環境留下的測試資料被正式流程抓到。這些都不是單純 prompt 可以解決的問題，而是「Runtime Memory Isolation」沒有做好。換句話說，記憶隔離不是資安選配，而是可運營 AI 系統的基礎工程。</p>
+
+    <h2>一、先把「記憶」拆清楚：不是一個資料庫就叫記憶系統</h2>
+    <p>你若把所有資訊都塞進同一個向量庫，再用語意檢索硬撈，幾乎注定會越界。要做隔離，第一步是分類。至少要有以下四層：</p>
+    <ul>
+      <li><strong>Session memory</strong>：單次會話暫存，只在當前任務有效，任務結束即回收。</li>
+      <li><strong>Task memory</strong>：同一工作單（ticket / workflow）跨步驟共享，但不可外溢到其他任務。</li>
+      <li><strong>Profile memory</strong>：對應特定使用者或客戶的穩定偏好與設定，需有資料主體綁定。</li>
+      <li><strong>Global knowledge</strong>：非個資、可公開或可授權共享的知識層。</li>
+    </ul>
+
+    <p>這四層最大的價值是「預設拒絕」（default deny）：每次代理讀取資料前，先問它屬於哪一層、該層對這個代理是否開放、開放範圍到哪裡。若回答不出來，就不應讀取。很多團隊現在做法剛好相反：先放行，再靠事後審計補洞。這在 AI 系統上幾乎一定會失敗，因為流量速度遠快於人工補救速度。</p>
+
+    <h2>二、隔離不是只看「誰能讀」，還要看「讀了能怎麼用」</h2>
+    <p>傳統系統常把權限模型停在 RBAC（Role-Based Access Control）：某角色可讀某資料。但在 Agent 世界，這不夠。你要再加兩層限制：</p>
+    <ol>
+      <li><strong>Use constraint（用途約束）</strong>：資料可讀，但只能用於特定任務類型，不可用於生成對外內容。</li>
+      <li><strong>Propagation constraint（傳播約束）</strong>：資料可在本代理內使用，但不可傳給下游代理或外部 API。</li>
+    </ol>
+
+    <p>實作上可以把每筆記憶附上政策標籤（policy tags），例如：<code>sensitivity=high</code>、<code>purpose=billing_support</code>、<code>shareable=false</code>、<code>retention=7d</code>。代理每次檢索與輸出都要跑 policy check，違反就阻擋或降級到人工覆核。這會增加一點延遲，但相比資料外洩事故成本，幾乎都是划算的。</p>
+
+    <h2>三、最小暴露（least exposure）比最小權限更重要</h2>
+    <p>我們都知道 least privilege，但在記憶系統裡更實際的是 least exposure：即使代理有權限，也不代表它應該一次拿到完整原文。更安全的做法是分級回傳：</p>
+    <ul>
+      <li>先回傳摘要（summary）與關鍵欄位；</li>
+      <li>需要時再逐步請求更細節內容；</li>
+      <li>高敏欄位（身分證、帳號、地址）預設遮罩；</li>
+      <li>外部輸出前再做一次 redaction（脫敏）與引用檢查。</li>
+    </ul>
+
+    <p>這種「漸進式揭露」會讓代理流程多一步，但它大幅降低 accidental leak 的機率。很多團隊的錯誤是追求一步到位回覆速度，讓代理一次抓齊所有上下文。結果是只要最後一步出錯，前面拿到的敏感內容就全數暴露在錯誤路徑中。</p>
+
+    <h2>四、記憶回收策略（retention）要可執行，不要寫在簡報裡</h2>
+    <p>若不做回收，記憶系統會越用越危險。因為過期資料不只佔空間，還會在檢索時製造錯誤上下文，甚至把已失效政策帶回流程。建議至少建立三種回收機制：</p>
+    <div class="card">
+      <ul>
+        <li><strong>TTL 回收</strong>：session/task 記憶設定明確時效，到期即刪或封存。</li>
+        <li><strong>Event 回收</strong>：任務結案、客戶刪除請求、政策更新時觸發清理。</li>
+        <li><strong>Risk 回收</strong>：被標記為高風險誤用的記憶，自動降權或隔離審核。</li>
+      </ul>
+    </div>
+
+    <p>關鍵在可驗證：你要能回答「這段記憶何時建立、誰用過、何時回收、回收是否成功」。沒有這個追蹤鏈，合規檢查與事故調查都會卡死。</p>
+
+    <h2>五、審計（auditability）不是附加報表，而是系統設計原則</h2>
+    <p>多代理環境中，最難查的是「資料是怎麼一路流到外部的」。因此審計紀錄必須跟著資料流走，而不是只記「誰查了資料庫」。最低限度建議記錄：</p>
+    <ul>
+      <li>Memory read/write 的 actor、時間、來源、目標。</li>
+      <li>每次 policy decision（允許/拒絕/降級）的理由。</li>
+      <li>摘要生成與最終輸出間的關聯 ID。</li>
+      <li>跨代理傳遞時的 trace ID 與敏感等級變化。</li>
+    </ul>
+
+    <p>有了這些，你才能在事故後快速回答三個問題：哪一步越界、為什麼越界、怎樣防止重演。若做不到，團隊只會停留在「下次小心一點」這種無效改善。</p>
+
+    <h2>六、給團隊的落地藍圖：四週做出第一版隔離能力</h2>
+    <h3>Week 1：盤點資料流與記憶層級</h3>
+    <p>畫出代理—工具—資料之間的實際流向，標記敏感資料點與跨任務共享點。沒有這張圖，後面都在猜。</p>
+
+    <h3>Week 2：導入 policy tags 與預設拒絕</h3>
+    <p>先從高風險流程（客服金流、個資查詢、對外公告）上線標籤與 gate。不要企圖一次全域改造，先把最容易爆炸的區域封住。</p>
+
+    <h3>Week 3：建立審計追蹤與回收作業</h3>
+    <p>把 trace ID 串起來，建立 TTL + event 回收。至少做到每日稽核抽樣，確保規則真的在跑。</p>
+
+    <h3>Week 4：回歸測試 + canary</h3>
+    <p>把歷史事故轉成回歸案例，跑小流量 canary，觀察誤阻擋率與漏檢率，再調整政策閾值。</p>
+
+    <p>這套藍圖不完美，但可在一個月內把風險從「不可見」變成「可觀測」。對大部分中小團隊，這就是實際可行的起點。</p>
+
+    <h2>七、常見誤區：把記憶當成「越多越聰明」</h2>
+    <p>這個觀念在 demo 階段可能成立，但在生產環境幾乎是反效果。記憶越多，檢索污染越高；上下文越長，錯誤輸出越難追；跨任務重用越頻繁，越界風險越大。真正成熟的策略是「有節制地記憶」：保留必要、移除冗餘、限制流向、持續審計。AI 產品的信任不是靠記住一切，而是靠只記住該記住的事。</p>
+
+    <h2>結語：記憶隔離是 AI 系統的文明線</h2>
+    <p>當 AI 從回答問題走向代辦任務，記憶就不再是輔助功能，而是權力系統。沒有隔離，就沒有真正的邊界；沒有邊界，就談不上可靠自治。Agent Runtime Memory Isolation 的價值，不在於讓系統看起來更複雜，而在於讓它在真實世界裡可被信任、可被監管、可被持續運營。</p>
+
+    <p>如果你的團隊正在做多代理協作，我建議今天就先做一件事：把目前所有記憶來源列出來，逐一標上「誰可讀、可用於何處、何時回收、如何審計」。只要這張表還空白，你的風險其實已經在路上。</p>
+
+    <h2>參考資料（References）</h2>
+    <ul>
+      <li>NIST AI RMF 1.0（Govern/Map/Measure/Manage）</li>
+      <li>OWASP Top 10 for LLM Applications（資料外洩與權限濫用章節）</li>
+      <li>Google BeyondProd / Zero Trust Architecture 公開文件</li>
+      <li>Microsoft Responsible AI Standard（資料治理與可追蹤性）</li>
+      <li>OpenAI / Anthropic 公開安全最佳實務（tool use 與 policy guardrails）</li>
+    </ul>
+  </main>
+</body>
+</html>
