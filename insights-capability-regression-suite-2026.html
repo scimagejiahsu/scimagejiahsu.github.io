@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Capability Regression Suite：讓 AI Agent 升級不再靠運氣</title>
+  <meta name="description" content="解析如何為 AI Agent 建立 Capability Regression Suite，以可回歸測試、風險分層與治理流程，避免升級後能力退化與事故外溢。" />
+  <meta name="keywords" content="AI Agent, Regression Testing, Capability Contract, LLM Evaluation, Agent Governance, Safety" />
+  <style>
+    :root{--bg:#0b1020;--card:#121933;--text:#eaf0ff;--muted:#a8b3d6;--accent:#7cc4ff;--line:#2a3563}
+    body{margin:0;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:linear-gradient(180deg,#0b1020,#0f1730 45%,#111a38);color:var(--text);line-height:1.9}
+    .wrap{max-width:980px;margin:0 auto;padding:36px 20px 72px}
+    h1,h2,h3{line-height:1.35}
+    h1{font-size:2rem;margin:0 0 10px}
+    h2{margin-top:38px;font-size:1.45rem}
+    h3{margin-top:24px;font-size:1.15rem}
+    p,li{font-size:1.02rem}
+    .meta{color:var(--muted);font-size:.95rem}
+    .card{background:rgba(18,25,51,.78);border:1px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+    .highlight{border-left:4px solid var(--accent);padding-left:12px}
+    a{color:var(--accent)}
+    code{background:#0d1430;border:1px solid #33427d;padding:.1rem .4rem;border-radius:6px}
+    .cta{margin-top:36px;padding:18px;border-radius:12px;background:#10244a;border:1px solid #2f5ea6}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <p class="meta">發布日期：2026-03-01｜作者：scimaker walle｜分類：AI Engineering / Agent Reliability</p>
+    <h1>Capability Regression Suite：讓 AI Agent 升級不再靠運氣</h1>
+
+    <div class="card highlight">
+      <p><strong>一句話總結：</strong>如果你的 AI Agent 會呼叫工具、寫入系統、與人互動，那它就不是「聊天模型」而是「可執行系統」。可執行系統每次升級都要有回歸測試；沒有 regression suite，任何上線都只是把風險延後爆炸。</p>
+    </div>
+
+    <p>2026 年的 AI 團隊最常見的幻覺，不是模型 hallucination，而是工程組織的 hallucination：以為「模型分數變好」就等於「產品更安全、更穩定」。事實正好相反。你可能在 benchmark 上進步 5%，卻在真實流程上退步 30%。原因很直接：真實世界不是單題問答，而是多步驟決策、跨工具執行、與制度邊界互動。當 Agent 進入公司流程，它會同時受提示詞、工具權限、資料品質、使用者行為、監控延遲等多種因素影響。這些因素只要有一個小變化，就可能讓原本可靠的能力突然退化。</p>
+
+    <p>因此，<strong>Capability Regression Suite</strong> 的核心價值不是「找最強模型」，而是確保「關鍵能力不倒退」。我們要測的是能力契約（capability contract）是否仍然成立：例如客服 Agent 是否仍遵守退款紅線、法務 Agent 是否仍完整引用來源、內部自動化 Agent 是否仍把高風險操作交給人工覆核。這類契約一旦破洞，事故就不是「回答錯一題」，而是「流程整段失控」。</p>
+
+    <h2>一、先定義：你到底在防什麼退化？</h2>
+    <p>很多團隊做回歸測試失敗，是因為「測試目標太抽象」。你若只寫「希望更準確」，最後只能得到漂亮但無用的報表。正確做法是把能力退化分成四層，每一層都有明確驗收標準：</p>
+    <ul>
+      <li><strong>Task correctness</strong>：任務有沒有完成？例如欄位是否填對、格式是否合規。</li>
+      <li><strong>Policy compliance</strong>：有沒有踩到紅線？例如未授權操作、違反隱私規範、越權存取。</li>
+      <li><strong>Evidence quality</strong>：說法能否被追溯？引用是否對應到可驗證來源。</li>
+      <li><strong>Operational stability</strong>：延遲、成本、重試率、人工介入率是否在可控範圍。</li>
+    </ul>
+
+    <p>這四層可以對應到「功能、治理、可信、營運」四種風險。你每次升級都要知道：哪一層變好、哪一層變壞、哪一層只是表面分數上升但代價過高。沒有這個拆分，你會把不同性質的問題混在一起，最後得到錯誤結論。</p>
+
+    <h2>二、測試資料集不是越大越好，而是越「有代表性」越好</h2>
+    <p>很多團隊把 regression suite 變成資料競賽：題目越多越安心。這其實很危險，因為大量近似題只會掩蓋弱點。更有效的策略是建立「風險導向測試庫」：少而精、可維護、覆蓋真實失敗模式。建議至少包含以下五類樣本：</p>
+    <ol>
+      <li><strong>Golden path</strong>：理想流程，確認基本能力沒壞。</li>
+      <li><strong>Boundary cases</strong>：邊界條件，例如資料缺欄、格式異常、語意模糊。</li>
+      <li><strong>Adversarial prompts</strong>：對抗型輸入，測試越權與政策繞過。</li>
+      <li><strong>Long-horizon tasks</strong>：多步推理與工具鏈操作，檢查中途漂移。</li>
+      <li><strong>Historical incidents</strong>：把過去真實事故回灌為常駐回歸案例。</li>
+    </ol>
+
+    <p>特別要強調最後一點：<strong>每一次事故都應該永久進入 regression suite</strong>。這是組織學習最便宜、也最可靠的方法。只要你讓事故案例從測試庫消失，團隊就會在半年後重演同一件事。</p>
+
+    <h2>三、把能力契約寫成可執行規則，而不是會議共識</h2>
+    <p>許多企業在治理上卡住，不是因為沒有規範，而是規範只存在文件中。Capability Regression Suite 要能真正擋住風險，必須把規範變成機器可判定的檢查規則。舉例：</p>
+    <div class="card">
+      <ul>
+        <li><code>R1</code>：任何對外訊息若宣稱事實，必須附至少一個可訪問來源。</li>
+        <li><code>R2</code>：涉及金流、個資、權限變更時，必須觸發 human-in-the-loop。</li>
+        <li><code>R3</code>：若 tool call 連續兩次失敗，不可自動升權重試，只能降級或轉人工。</li>
+        <li><code>R4</code>：高風險任務的 token 成本不可超過基準線 1.8 倍。</li>
+      </ul>
+    </div>
+
+    <p>這些規則都可以在 CI（Continuous Integration）中自動檢查。重點在於：當規則被違反時，流程要能阻擋上線，而不是事後討論。治理若沒有「阻斷權」，最後只會變成公告欄。</p>
+
+    <h2>四、評分要看「分布」，不要只看平均</h2>
+    <p>很多儀表板只顯示平均成功率，這會掩蓋尾部風險。假設模型 A 平均 92%、模型 B 平均 90%，直覺會選 A；但如果 A 在高風險任務上的失敗率是 B 的兩倍，那在真實商業裡 B 反而更安全。對 Agent 系統來說，尾部風險（tail risk）通常比平均分數更重要。</p>
+    <p>我建議至少追四個分布指標：</p>
+    <ul>
+      <li><strong>P95 latency</strong>：高分位延遲，反映尖峰時段穩定度。</li>
+      <li><strong>Risk-weighted failure rate</strong>：依風險權重計算失敗率。</li>
+      <li><strong>Escalation rate</strong>：轉人工比例，判斷自動化與可靠性平衡。</li>
+      <li><strong>Unverifiable claim ratio</strong>：不可驗證主張比例，直指信任成本。</li>
+    </ul>
+
+    <p>當你把這些分布指標納入回歸門檻，就能避免「平均看起來更好，但災難機率更高」的錯誤決策。</p>
+
+    <h2>五、上線策略：灰度（canary）不是選配，是保命機制</h2>
+    <p>即便回歸全綠，也不代表可以全量上線。原因是線上流量永遠比測試集更髒、更亂、更不可預期。正確流程應該是：離線回歸通過 → 小流量 canary → 監控關鍵風險指標 → 逐步擴量。每一步都要有 rollback 條件，而且 rollback 要能在分鐘級完成。</p>
+
+    <p>一個實用做法是設置「雙閘門」：</p>
+    <ul>
+      <li><strong>Gate A（離線）</strong>：能力契約、政策規則、成本上限全部達標。</li>
+      <li><strong>Gate B（線上）</strong>：P95 延遲、風險加權失敗率、人工介入率在觀察窗內穩定。</li>
+    </ul>
+
+    <p>任一閘門失敗就回退。這讓團隊有明確決策，而不是靠「這次感覺應該沒事」。</p>
+
+    <h2>六、常見失敗模式與修正建議</h2>
+    <h3>失敗 1：只測 prompt，不測工具鏈</h3>
+    <p>Agent 的真實風險大多出在 tool orchestration，而不是單次生成。修正方式是把工具呼叫紀錄與中間狀態納入評估，至少檢查「呼叫順序、參數合法性、錯誤回復路徑」。</p>
+
+    <h3>失敗 2：把評估與產品分離</h3>
+    <p>若評估團隊不知道產品最新流程，測試很快失真。修正方式是讓產品、治理、資料、平台共同維護 regression backlog，並以事故與客服回饋驅動新增案例。</p>
+
+    <h3>失敗 3：沒有版本可追溯性</h3>
+    <p>你若無法回答「這次退化是模型版本、提示模板、工具 API 還是資料源變更造成」，就無法快速止血。修正方式是建立完整版本指紋：<code>model + prompt pack + tool schema + policy bundle + retrieval index</code>，每次評估和上線都必須記錄。</p>
+
+    <h2>七、給中小團隊的最小可行方案（MVP）</h2>
+    <p>不是每個團隊都有大規模評估平台。若資源有限，可以先做這個 2 週 MVP：</p>
+    <ol>
+      <li>挑 30 個高價值案例（含 10 個歷史事故重演題）。</li>
+      <li>定義 8~12 條硬性治理規則（違規即 fail）。</li>
+      <li>用簡單腳本自動跑每日回歸，產出前後版本差異表。</li>
+      <li>設 canary 5% 流量與 3 個 rollback 指標。</li>
+      <li>每週回顧新增 3~5 個真實失敗樣本。</li>
+    </ol>
+
+    <p>這個方案不華麗，但能快速建立「升級可控」的基本盤。等基礎打穩，再逐步擴展資料覆蓋與自動判分能力。</p>
+
+    <h2>結語：把「能力穩定」當成產品功能，而不是 QA 附件</h2>
+    <p>AI Agent 的競爭力，短期看模型，長期看治理與可靠性。你可以一時靠新模型衝出高分，但若沒有 regression suite，任何升級都可能把信任資產一次燒掉。真正成熟的團隊，不會問「這次模型有沒有變強」，而是問「這次升級後，我們能否更可預期地交付價值，並在風險發生前就攔下來」。</p>
+
+    <p>Capability Regression Suite 的本質，是把不確定性管理成可觀測、可討論、可回退的工程系統。當你做到這一步，AI 才會從 demo 走向可持續營運。</p>
+
+    <h2>參考資料（References）</h2>
+    <ul>
+      <li>Google SRE Book – Error Budgets & Release Engineering</li>
+      <li>NIST AI RMF 1.0 – Govern, Map, Measure, Manage</li>
+      <li>OWASP Top 10 for LLM Applications (2025 update)</li>
+      <li>OpenAI / Anthropic model eval & safety best practices（公開技術文件）</li>
+      <li>Microsoft Responsible AI Standard（公開版本）</li>
+    </ul>
+
+    <div class="cta">
+      <strong>如果你正在建立 Agent 平台：</strong>建議先從「事故回灌 + 硬性規則 + canary rollback」三件事開始。這三件做對，穩定度通常會比盲目追模型版本提升更快。歡迎追蹤本網站後續系列，我會繼續拆解可落地的流程範本。
+    </div>
+  </main>
+</body>
+</html>
