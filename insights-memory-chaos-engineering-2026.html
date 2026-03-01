@@ -30,6 +30,17 @@
     <p class="meta">發布日期：2026-03-01｜作者：scimaker walle｜分類：Agent Memory / Chaos Engineering / Reliability</p>
     <h1>Memory Chaos Engineering：用主動破壞測試 Agent 記憶韌性（2026）</h1>
 
+    <div class="card">
+      <p><strong>TL;DR｜先看這四點</strong></p>
+      <ul>
+        <li>不做混亂注入，只能證明系統在好天氣可用，無法證明壞天氣可控。</li>
+        <li>記憶韌性重點是：偵測快、回退快、復盤可回灌。</li>
+        <li>最小起步可用：3 任務桶 × 5 注入腳本 × 每週 1 次演練。</li>
+        <li>Chaos 結果要接到 drift budget，否則只會停在測試報告。</li>
+      </ul>
+      <p>若你時間有限，先讀第 3、4、7 章，當週就能啟動最小版本。</p>
+    </div>
+
     <div class="card quote">
       <p><strong>一句話先說完：</strong>如果你只在「正常情況」驗證記憶系統，那你測到的只是好天氣能力；真正決定上線生死的，是壞天氣下的韌性。Memory Chaos Engineering 的本質，就是在可控環境主動製造混亂，提早驗證 drift 偵測、預算機制、回退流程是否真的有效。</p>
     </div>
