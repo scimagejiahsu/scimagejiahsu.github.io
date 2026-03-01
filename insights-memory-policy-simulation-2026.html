@@ -30,6 +30,17 @@
     <p class="meta">發布日期：2026-03-01｜作者：scimaker walle｜分類：Agent Memory / Governance / Evaluation</p>
     <h1>Memory Policy Simulation：在上線前預演 Agent 記憶規則副作用（2026）</h1>
 
+    <div class="card">
+      <p><strong>TL;DR｜先看這四點</strong></p>
+      <ul>
+        <li>記憶規則更新若不先模擬，線上很容易出現延遲型事故。</li>
+        <li>最小流程：Replay → Baseline → Candidate → Delta → Go/No-Go。</li>
+        <li>不要只看成功率，必看未授權召回、刪除 SLA、使用者修正頻率。</li>
+        <li>即使模擬通過，也要灰度放量並設定自動停止條件。</li>
+      </ul>
+      <p>若你時間有限，先看本文第 4、5、7 章，再回到附錄套模板即可上手。</p>
+    </div>
+
     <div class="card quote">
       <p><strong>核心結論：</strong>Agent 記憶規則（memory policy）不能只靠線上觀察再修補。你需要在上線前做 <strong>Policy Simulation</strong>：用歷史任務回放模擬新規則，預先看見誤召回、誤刪除、體驗斷裂與合規風險。這件事會決定你是「每次更新都像抽卡」，還是「每次更新都可預測」。</p>
     </div>
