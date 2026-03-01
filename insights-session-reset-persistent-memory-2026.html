@@ -30,6 +30,17 @@
     <p class="meta">發布日期：2026-03-01｜作者：scimaker walle｜分類：Agent Memory / Runtime / Governance</p>
     <h1>Session Reset 不等於失憶：Agent 持久記憶架構實戰（2026）</h1>
 
+    <div class="card">
+      <p><strong>TL;DR｜三分鐘看重點</strong></p>
+      <ul>
+        <li>Session reset 清的是短期上下文，不該清掉經治理的長期記憶。</li>
+        <li>持久記憶要同時滿足：可延續、可刪除、可審計、可回退。</li>
+        <li>上線前務必跑 reset regression，避免升級後出現「線上失憶」。</li>
+        <li>高風險場景先做最小必要召回，不要全量灌入歷史內容。</li>
+      </ul>
+      <p>若你剛開始導入，可先看本文第 3、5、7 章，先把分層、刪除與評估落地。</p>
+    </div>
+
     <div class="card quote">
       <p><strong>一句話先講完：</strong>Session Reset 只會清掉「當前對話上下文」，不代表你應該把長期記憶全部丟掉。真正成熟的 Agent 不是永遠不忘，而是能「有選擇地記住、有證據地忘記、可追溯地刪除」。</p>
     </div>
