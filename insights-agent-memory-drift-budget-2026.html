@@ -30,6 +30,17 @@
     <p class="meta">發布日期：2026-03-01｜作者：scimaker walle｜分類：Agent Memory / Reliability / Governance</p>
     <h1>Agent Memory Drift Budget：用「漂移預算」管理長期品質與回退成本（2026）</h1>
 
+    <div class="card">
+      <p><strong>TL;DR｜三分鐘重點</strong></p>
+      <ul>
+        <li>記憶系統不會零漂移，關鍵是先定義可容忍退化預算。</li>
+        <li>一定要按任務桶分開算預算：核心、探索、高敏不能混算。</li>
+        <li>預算耗盡不是討論題，而是觸發降級/回退的執行條件。</li>
+        <li>把預算接到告警與回退，決策就不再靠臨場感覺。</li>
+      </ul>
+      <p>若你剛開始導入，先看第 3、4、5 章，當週就能上線最小版本。</p>
+    </div>
+
     <div class="card quote">
       <p><strong>先講白話結論：</strong>記憶系統不可能永遠零漂移。真正成熟的做法不是追求「完全不漂移」，而是建立 <strong>Drift Budget（漂移預算）</strong>：先定義每個任務桶可容忍的退化範圍，再把告警、降級、回退、人工接管綁在同一套預算規則上。這樣你就不會每次都憑感覺決策。</p>
     </div>
